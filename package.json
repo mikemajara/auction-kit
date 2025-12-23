@@ -1,0 +1,26 @@
+{
+  "name": "auction-kit",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Framework-agnostic auction mechanics library",
+  "keywords": ["auction", "bidding", "first-price", "second-price", "sealed-bid"],
+  "author": "Miguel Majara",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "type-check": "pnpm -r type-check"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.1.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}
+

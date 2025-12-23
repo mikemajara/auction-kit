@@ -1,0 +1,25 @@
+{
+  "name": "@auction-kit/hono",
+  "version": "0.0.1",
+  "description": "Reference API implementation with Hono",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@auction-kit/core": "workspace:*",
+    "@auction-kit/drizzle": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "peerDependencies": {
+    "hono": "^3.11.0"
+  }
+}
+

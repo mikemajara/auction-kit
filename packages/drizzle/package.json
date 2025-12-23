@@ -1,0 +1,25 @@
+{
+  "name": "@auction-kit/drizzle",
+  "version": "0.0.1",
+  "description": "Database layer with Drizzle ORM for Postgres",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@auction-kit/core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "peerDependencies": {
+    "drizzle-orm": "^0.29.0",
+    "postgres": "^3.4.0"
+  }
+}
+
