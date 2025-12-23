@@ -12,6 +12,9 @@ build/
 .env.local
 .env.*.local
 
+# Docker
+docker-compose.override.yml
+
 # IDE
 .vscode/
 .idea/
