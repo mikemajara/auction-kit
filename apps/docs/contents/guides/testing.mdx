@@ -1,0 +1,306 @@
+---
+title: "Testing Guide"
+description: "Comprehensive testing guide for the auction-kit database layer"
+order: 2
+category: "guides"
+---
+
+# Testing Auction Kit Database Layer
+
+This guide walks you through testing the complete database implementation.
+
+## Prerequisites
+
+- Docker Desktop installed and running
+- Node.js 18+ and pnpm 8+
+
+## Quick Start (5 minutes)
+
+### 1. Start PostgreSQL
+
+```bash
+# From project root
+docker-compose up -d
+
+# Verify it's running
+docker-compose ps
+```
+
+Expected output:
+```
+NAME              STATUS   PORTS
+auction-kit-db    Up       0.0.0.0:5432->5432/tcp
+```
+
+### 2. Generate and Run Migrations
+
+```bash
+cd packages/drizzle
+
+# Generate migration files from schema
+pnpm db:generate
+
+# Apply migrations to database
+pnpm db:migrate
+```
+
+### 3. Run Manual Test
+
+```bash
+# Still in packages/drizzle
+pnpm test:manual
+```
+
+You should see output like:
+```
+🎯 Testing Auction Kit Database Layer
+==================================================
+
+1️⃣  Creating second-price auction...
+   ✅ Created auction: xxx
+   
+2️⃣  Adding bidders...
+   ✅ Alice: xxx
+   ✅ Bob: xxx
+   ✅ Charlie: xxx
+
+3️⃣  Placing bids on VIP seat...
+   💰 Alice bids $100
+   💰 Bob bids $200
+   💰 Charlie bids $150
+
+...
+
+7️⃣  Settlement results:
+   🏆 WINNER: Bob
+      Item: vip-seat
+      Original bid: $200
+      Pays: $150
+      Saves: $50 (second-price discount!)
+
+✅ All tests passed!
+```
+
+## What the Test Does
+
+The manual test script (`test-manual.ts`) performs a complete auction flow:
+
+1. **Creates a second-price auction** with timestamp tie-breaking
+2. **Adds three bidders**: Alice, Bob, and Charlie
+3. **Places three bids** on a VIP seat:
+   - Alice: $100
+   - Bob: $200 (highest)
+   - Charlie: $150
+4. **Closes the auction** (no more bids allowed)
+5. **Resolves the auction** using core settlement logic
+6. **Verifies results**:
+   - Bob wins (highest bidder)
+   - Bob pays $150 (second-highest bid, not his $200)
+   - Bob saves $50 (second-price advantage!)
+
+## Database Inspection
+
+### Option 1: Drizzle Studio (GUI)
+
+```bash
+cd packages/drizzle
+pnpm db:studio
+```
+
+Opens a web interface at http://localhost:4983 to browse tables and data.
+
+### Option 2: psql CLI
+
+```bash
+# Connect to database
+docker exec -it auction-kit-db psql -U auction -d auction_kit_dev
+
+# List tables
+\dt
+
+# Query data
+SELECT * FROM auctions;
+SELECT * FROM bidders;
+SELECT * FROM bids;
+SELECT * FROM settlements;
+
+# Exit
+\q
+```
+
+### Option 3: VS Code Extension
+
+Install "PostgreSQL" extension and connect:
+- Host: localhost
+- Port: 5432
+- Database: auction_kit_dev
+- Username: auction
+- Password: auction123
+
+## Database Schema
+
+### Tables
+
+**auctions**
+- id (uuid, primary key)
+- status (open | closed | resolved)
+- config (jsonb) - auction configuration
+- created_at, resolved_at
+
+**bidders**
+- id (uuid, primary key)
+- auction_id (references auctions)
+- name
+- created_at
+
+**bids**
+- id (uuid, primary key)
+- auction_id (references auctions)
+- bidder_id (references bidders)
+- item_id
+- amount
+- placed_at
+- status (active | won | lost | cancelled)
+
+**settlements**
+- id (uuid, primary key)
+- auction_id (references auctions)
+- bidder_id (references bidders)
+- item_id
+- won_amount
+- bid_amount
+- settled_at
+
+## Running Multiple Tests
+
+The test script can be run multiple times - each run creates a new auction:
+
+```bash
+# Run test 5 times
+for i in {1..5}; do pnpm test:manual; done
+```
+
+## Custom Tests
+
+Create your own test by copying `test-manual.ts`:
+
+```typescript
+import { drizzle } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
+import { createAuction, placeBid, resolveAuction } from './src/queries'
+
+const client = postgres(process.env.DATABASE_URL!)
+const db = drizzle(client)
+
+// Your custom test logic here...
+
+await client.end()
+```
+
+## Cleanup
+
+### Reset Database (Keep Container)
+
+```bash
+# Drop all tables
+docker exec -it auction-kit-db psql -U auction -d auction_kit_dev -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+
+# Re-run migrations
+cd packages/drizzle
+pnpm db:migrate
+```
+
+### Stop Container
+
+```bash
+# Stop but keep data
+docker-compose stop
+
+# Start again later
+docker-compose start
+```
+
+### Remove Everything
+
+```bash
+# Stop and remove container + data
+docker-compose down -v
+```
+
+## Troubleshooting
+
+### Port 5432 Already in Use
+
+If you have Postgres already running locally:
+
+```bash
+# Stop local Postgres (macOS)
+brew services stop postgresql
+
+# Or change docker-compose.yml port:
+ports:
+  - "5433:5432"  # Use 5433 instead
+
+# Then update .env:
+DATABASE_URL=postgres://auction:auction123@localhost:5433/auction_kit_dev
+```
+
+### Connection Refused
+
+Make sure Docker is running:
+
+```bash
+docker ps
+
+# If nothing shows, start Docker Desktop
+```
+
+### Migration Errors
+
+If migrations fail, check the database is empty:
+
+```bash
+docker-compose down -v
+docker-compose up -d
+pnpm db:migrate
+```
+
+### Test Script Fails
+
+Check environment variable:
+
+```bash
+echo $DATABASE_URL
+# Should show: postgres://auction:auction123@localhost:5432/auction_kit_dev
+
+# If empty:
+export DATABASE_URL="postgres://auction:auction123@localhost:5432/auction_kit_dev"
+```
+
+## Integration with Your App
+
+Once tests pass, you can use the database layer in your application:
+
+```typescript
+import { drizzle } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
+import { createAuction, placeBid, resolveAuction } from '@auction-kit/drizzle'
+
+// Setup
+const client = postgres(process.env.DATABASE_URL!)
+const db = drizzle(client)
+
+// Use in your API routes, background jobs, etc.
+const auction = await createAuction(db, config)
+await placeBid(db, bidData)
+const result = await resolveAuction(db, auctionId)
+```
+
+## Next Steps
+
+- ✅ Database layer is working!
+- 🚀 Ready to build API layer (Hono/Next.js/Express)
+- 🚀 Ready to add real-time features (Supabase/Socket.io)
+
+See [Drizzle API Reference](/docs/api/drizzle) for full API documentation.
+
