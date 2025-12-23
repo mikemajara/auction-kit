@@ -92,3 +92,4 @@ export function getWinner(bids: SimpleBid[]): SimpleBid | null {
   return ranked[0] ?? null
 }
 
+

@@ -132,3 +132,4 @@ export function getSecondPrice(rankedBids: RankedBid[]): number | undefined {
   return rankedBids[1]?.amount
 }
 
+

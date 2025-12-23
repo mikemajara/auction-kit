@@ -141,3 +141,4 @@ cd packages/core && pnpm test:watch
 **Next:** Week 1, Day 1 - Create `types.ts`
 **Goal:** Full core implementation by end of Week 1
 
+

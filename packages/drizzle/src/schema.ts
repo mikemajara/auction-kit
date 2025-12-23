@@ -118,3 +118,4 @@ export type NewBid = typeof bids.$inferInsert
 export type Settlement = typeof settlements.$inferSelect
 export type NewSettlement = typeof settlements.$inferInsert
 
+
