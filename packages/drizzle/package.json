@@ -9,12 +9,16 @@
   "scripts": {
     "dev": "tsc --watch",
     "build": "tsc",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@auction-kit/core": "workspace:*"
   },
   "devDependencies": {
+    "drizzle-kit": "^0.20.0",
     "typescript": "^5.3.3"
   },
   "peerDependencies": {

@@ -2,29 +2,210 @@
 
 Database layer with Drizzle ORM for Postgres.
 
-## Status: Coming in Week 1
+## Status: ✅ Implemented (Week 1)
 
-This package will provide:
+## Features
 
-- Drizzle schema for auctions, bidders, bids, settlements
-- Query functions: `placeBid()`, `resolveBids()`, `getAuctionState()`
-- Transaction support for atomic resolution
-- Postgres adapter
+- **Complete schema** for auctions, bidders, bids, and settlements
+- **Type-safe queries** powered by Drizzle ORM
+- **Transaction support** for atomic auction resolution
+- **Validation integration** with core package
+- **Timestamp tracking** for audit trails
 
-## Planned Usage
+## Installation
+
+```bash
+pnpm add @auction-kit/drizzle drizzle-orm postgres
+```
+
+## Database Setup
+
+1. Set your database URL:
+
+```bash
+export DATABASE_URL="postgres://user:pass@localhost:5432/auctions"
+```
+
+2. Generate migrations:
+
+```bash
+cd packages/drizzle
+pnpm db:generate
+```
+
+3. Run migrations:
+
+```bash
+pnpm db:migrate
+```
+
+## Usage
+
+### Initialize Database Connection
 
 ```typescript
-import { placeBid, resolveBids } from '@auction-kit/drizzle'
+import { drizzle } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
 
-// Place a bid
+const client = postgres(process.env.DATABASE_URL!)
+const db = drizzle(client)
+```
+
+### Create an Auction
+
+```typescript
+import { createAuction } from '@auction-kit/drizzle'
+
+const auction = await createAuction(db, {
+  type: 'second-price',
+  tieBreak: 'timestamp',
+  multiUnit: false,
+})
+```
+
+### Add Bidders
+
+```typescript
+import { createBidder } from '@auction-kit/drizzle'
+
+const alice = await createBidder(db, auction.id, 'Alice')
+const bob = await createBidder(db, auction.id, 'Bob')
+```
+
+### Place Bids
+
+```typescript
+import { placeBid } from '@auction-kit/drizzle'
+
 await placeBid(db, {
-  auctionId: 'auction-123',
-  bidderId: 'alice',
+  auctionId: auction.id,
+  bidderId: alice.id,
   itemId: 'seat1',
   amount: 100,
 })
 
-// Resolve auction
-const result = await resolveBids(db, 'auction-123')
+await placeBid(db, {
+  auctionId: auction.id,
+  bidderId: bob.id,
+  itemId: 'seat1',
+  amount: 150,
+})
+```
+
+### Resolve Auction
+
+```typescript
+import { resolveAuction, updateAuctionStatus } from '@auction-kit/drizzle'
+
+// Close bidding
+await updateAuctionStatus(db, auction.id, 'closed')
+
+// Resolve and settle
+const result = await resolveAuction(db, auction.id)
+
+console.log('Settlements:', result.settlements)
+// [{ bidderId: 'bob-id', itemId: 'seat1', wonAmount: 100, bidAmount: 150 }]
+```
+
+### Get Auction State
+
+```typescript
+import { getAuctionState } from '@auction-kit/drizzle'
+
+const state = await getAuctionState(db, auction.id)
+
+console.log('Auction:', state.auction)
+console.log('Bidders:', state.bidders)
+console.log('Bids:', state.bids)
+console.log('Settlements:', state.settlements)
+```
+
+## Schema
+
+### Tables
+
+- **auctions** - Auction configurations and status
+- **bidders** - Participants in auctions
+- **bids** - Individual bids with amounts and timestamps
+- **settlements** - Final results after resolution
+
+### Relationships
+
+```
+auctions
+  └── bidders (one-to-many)
+  └── bids (one-to-many)
+  └── settlements (one-to-many)
+
+bidders
+  └── bids (one-to-many)
+  └── settlements (one-to-many)
+```
+
+## API Reference
+
+### Auction Operations
+
+- `createAuction(db, config)` - Create new auction
+- `getAuction(db, auctionId)` - Fetch auction by ID
+- `updateAuctionStatus(db, auctionId, status)` - Update auction status
+- `getAuctionState(db, auctionId)` - Get complete auction state
+- `resolveAuction(db, auctionId, seed?)` - Settle auction
+
+### Bidder Operations
+
+- `createBidder(db, auctionId, name)` - Add bidder to auction
+- `getBidder(db, bidderId)` - Fetch bidder by ID
+- `getBiddersByAuction(db, auctionId)` - List all bidders
+
+### Bid Operations
+
+- `placeBid(db, input)` - Place new bid (with validation)
+- `getBidsByAuction(db, auctionId)` - List all bids
+- `getActiveBidsByAuction(db, auctionId)` - List active bids only
+- `cancelBid(db, bidId)` - Cancel a bid
+
+## Transaction Safety
+
+The `resolveAuction()` function runs in a transaction, ensuring:
+
+1. All bid statuses are updated atomically
+2. Settlement records are created together
+3. Auction status is updated consistently
+4. No partial updates if errors occur
+
+## Real-time Support
+
+The schema is designed to work with Postgres real-time providers like Supabase:
+
+```typescript
+// Listen for new bids
+supabase
+  .channel('bids')
+  .on('postgres_changes', {
+    event: 'INSERT',
+    schema: 'public',
+    table: 'bids',
+    filter: `auction_id=eq.${auctionId}`
+  }, (payload) => {
+    console.log('New bid:', payload.new)
+  })
+  .subscribe()
+```
+
+## Development
+
+```bash
+# Watch TypeScript
+pnpm dev
+
+# Type check
+pnpm type-check
+
+# Build
+pnpm build
+
+# Drizzle Studio (GUI)
+pnpm db:studio
 ```
 

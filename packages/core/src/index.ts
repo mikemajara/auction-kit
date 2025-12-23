@@ -5,12 +5,17 @@
  * Framework-agnostic, zero dependencies
  */
 
-// Week 0.5: Export POC for initial testing
-export * from './poc'
+// Week 1: Full implementation (primary exports)
+export * from './types'
+export * from './validator'
+export * from './ranker'
+export * from './settler'
 
-// Future exports (Week 1):
-// export * from './types'
-// export * from './validator'
-// export * from './ranker'
-// export * from './settler'
+// Week 0.5: POC exports (namespaced to avoid conflicts)
+export {
+  settleBidsSimple,
+  rankBids as rankBidsSimple,
+  getWinner as getWinnerSimple,
+} from './poc'
+export type { SimpleBid, SimpleSettlement } from './poc'
 
