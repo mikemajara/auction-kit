@@ -5,21 +5,20 @@ order: 1
 category: "guides"
 ---
 
-# Quick Start: Testing Database Layer
 
-## ✅ What Just Happened
 
-Your database layer is **fully tested and working**! Here's what we verified:
+## Overview
 
-- ✅ Second-price auction created
-- ✅ Three bidders added (Alice, Bob, Charlie)
-- ✅ Three bids placed ($100, $200, $150)
-- ✅ Auction resolved correctly
-- ✅ Bob wins (highest bidder)
-- ✅ Bob pays $150 (second-highest bid, not his $200)
-- ✅ Bob saves $50 thanks to second-price mechanism!
+This guide walks through the manual database test script. It provisions PostgreSQL, runs the Drizzle integration test, and validates a second-price sealed-bid auction from bid creation through settlement.
 
-## 🚀 Running Tests Yourself
+The script verifies that:
+
+- A second-price auction can be created.
+- Bidders and bids are stored with the expected data.
+- Auction resolution selects the highest bidder.
+- Settlement records use the second-highest bid for payment calculations.
+
+## Run the manual test
 
 ```bash
 # 1. Make sure Docker is running
@@ -30,14 +29,14 @@ cd packages/drizzle
 DATABASE_URL="postgres://auction:auction123@localhost:5433/auction_kit_dev" pnpm test:manual
 ```
 
-## 📦 What's Running
+## Default environment configuration
 
 - **PostgreSQL 16** on port 5433 (to avoid conflicts)
 - **Database**: `auction_kit_dev`
 - **Username**: `auction`
 - **Password**: `auction123`
 
-## 🔍 Inspecting the Database
+## Inspecting the database
 
 ### Option 1: Drizzle Studio (Visual GUI)
 
@@ -71,7 +70,7 @@ Use these credentials:
 - **Username**: auction
 - **Password**: auction123
 
-## 🧪 Testing Different Scenarios
+## Test variations
 
 ### First-Price Auction
 
@@ -86,7 +85,7 @@ const auction = await createAuction(db, {
 })
 ```
 
-Run again - now Bob pays $200 (his bid), not $150!
+Run again to compare first-price versus second-price outcomes.
 
 ### Multi-Unit Auction
 
@@ -115,7 +114,7 @@ const auction = await createAuction(db, {
 const result = await resolveAuction(db, auction.id, 12345) // Seed for reproducibility
 ```
 
-## 🧹 Cleanup
+## Cleanup
 
 ### Reset database (keep container):
 
@@ -137,49 +136,42 @@ docker-compose stop
 docker-compose down -v
 ```
 
-## 📊 Test Results
+## Example output
 
 Your last test showed:
 
 ```
-🏆 WINNER: Bob
-   Item: vip-seat
-   Original bid: $200
-   Pays: $150
-   Saves: $50 (second-price discount!)
+Winner: Bob
+Item: vip-seat
+Original bid: $200
+Pays: $150
+Reason: second-highest bid becomes the settlement price
 
-✅ Correct winner (Bob with highest bid)
-✅ Correct payment (second-highest bid: $150)
+Result: Correct winner and settlement captured
 ```
 
-## 🎯 Next Steps
+## Next steps
 
 Now that the database layer works, you can:
 
-1. **Build the API layer** (Week 2)
-   - Hono REST API routes
-   - CloudflareWorkers deployment
-   
-2. **Use it in your app** right now!
+1. **Use it in your app** right now!
    ```typescript
    import { createAuction, placeBid, resolveAuction } from '@auction-kit/drizzle'
    // Use in Next.js, Express, Hono, etc.
    ```
 
-3. **Add real-time features**
+2. **Add real-time features**
    - Supabase subscriptions
    - Socket.io
    - Polling
 
-## 📖 Full Documentation
+3. **Build the API layer**
+   - Hono REST API routes
+   - Cloudflare Workers deployment
+
+## Additional resources
 
 - **[Testing Guide](/docs/guides/testing)** - Detailed testing guide
 - **[Drizzle API Reference](/docs/api/drizzle)** - API reference
-- **[WEEK_1_COMPLETE.md](/docs/WEEK_1_COMPLETE.md)** - What we built
 
 ---
-
-**Everything is working!** 🎉
-
-The database layer is production-ready and fully tested.
-

@@ -5,19 +5,14 @@ order: 1
 category: "api"
 ---
 
-# @auction-kit/core
-
-Core auction logic - pure TypeScript functions with zero dependencies.
-
-## Status: Week 0.5 - Proof of Concept
-
-Currently implementing minimal POC to validate the core settlement algorithm.
-
-## POC Features
+## Features
 
 - ✅ First-price sealed-bid settlement
+- ✅ Second-price sealed-bid settlement (Vickrey)
 - ✅ Timestamp-based tie-breaking
+- ✅ Random tie-breaking (with seed)
 - ✅ Single winner per item
+- ✅ Multiple winners per item (multi-unit)
 - ✅ Multiple items
 
 ## Installation
@@ -26,10 +21,10 @@ Currently implementing minimal POC to validate the core settlement algorithm.
 pnpm add @auction-kit/core
 ```
 
-## Usage (POC)
+## Usage
 
 ```typescript
-import { settleBidsSimple } from '@auction-kit/core'
+import { resolveAuction } from '@auction-kit/core'
 
 const bids = [
   {
@@ -48,8 +43,14 @@ const bids = [
   },
 ]
 
-const settlements = settleBidsSimple(bids)
-// [{ bidderId: 'bob', itemId: 'seat1', wonAmount: 150 }]
+const config = {
+  type: 'first-price',
+  tieBreak: 'timestamp',
+  multiUnit: false,
+}
+
+const settlements = resolveAuction(bids, config)
+// [{ bidderId: 'bob', itemId: 'seat1', wonAmount: 150, bidAmount: 150 }]
 ```
 
 ## Development
@@ -65,11 +66,11 @@ pnpm test:watch
 pnpm build
 ```
 
-## What's Next (Week 1)
+## API Reference
 
-- Full type system aligned with auction theory
-- Second-price pricing support
-- Random tie-breaking
-- Multi-unit auctions
-- Comprehensive validation
+See the full API documentation for:
+- Auction configuration types
+- Bid ranking and settlement functions
+- Validation utilities
+- Type definitions
 

@@ -1,30 +1,24 @@
-export const url = "https://rubix-documents.vercel.app"
-export const siteicon = "/icon.png"
+export const url = "https://auctionkit.miguelalcalde.com"
+export const siteicon = "/logo.svg"
 
 export const gtm = "GTM-XXXXXXX"
 export const gtmconnected = true
 
-export const sitename = "Documents"
+export const sitename = "Auction Kit"
 export const description =
-  "This comprehensive documentation template, crafted with Next.js and available as open-source, delivers a sleek and responsive design, tailored to meet all your project documentation requirements."
-export const keywords = [
-  "Next.js",
-  "documentation",
-  "Rubix Studios",
-  "open source",
-  "SEO",
-]
-export const urlimage = "/images/og-image.png"
-export const imagealt = "Rubix Studios Documentation"
-export const twitterhandle = "@RubixStudios"
+  "Auction Kit is a framework-agnostic auction mechanics library."
+export const keywords = ["Auction Kit", "open source", "framework-agnostic"]
+export const urlimage = "/logo.svg"
+export const imagealt = "Auction Kit Documentation"
+export const twitterhandle = "@mikemajara"
 
-export const companyname = "Rubix Studios"
-export const companylink = "https://rubixstudios.com.au"
+export const companyname = "Auction Kit"
+export const companylink = "auctionkit.miguelalcalde.com"
 
 export const branding = true
 export const rightsidebar = true
 export const feedbackedit = true
-export const tableofcontent = true
 export const totopscroll = true
+export const tableofcontent = true
 
 export const loadfromgithub = false
