@@ -36,16 +36,19 @@ Create these files in order:
 ### Week 1 Implementation Order
 
 **Day 1-2: Types & Ranking**
+
 ```
 types.ts → types.test.ts → ranker.ts → ranker.test.ts
 ```
 
 **Day 3-4: Settlement & Validation**
+
 ```
 settler.ts → settler.test.ts → validator.ts → validator.test.ts
 ```
 
 **Day 5-7: Database**
+
 ```
 ../drizzle/src/schema.ts → queries.ts → integration.test.ts
 ```
@@ -60,14 +63,13 @@ The POC has working implementations you can expand:
 
 ### New Features to Add
 
-1. **Second-price pricing** (in addition to first-price)
-2. **Random tie-breaking** (in addition to timestamp)
-3. **Multi-unit auctions** (multiple winners per item)
-4. **Comprehensive validation** (new validator.ts)
+1. **Random tie-breaking** (in addition to timestamp)
+2. **Comprehensive validation** (new validator.ts)
 
 ### Code Templates Ready
 
 Check `pm/plan.md` for:
+
 - Full type definitions (lines 94-139)
 - `settleBids()` implementation skeleton (lines 200-247)
 - Database schema (lines 146-192)
@@ -79,6 +81,7 @@ Week 0.5: 10 tests ✅
 Week 1 Target: 100+ tests
 
 Test categories:
+
 - Empty/null cases
 - Single bidder
 - Multiple bidders
@@ -119,6 +122,7 @@ pnpm build
 **packages/core/src/types.ts**
 
 Just copy from the plan and remove budget constraint references:
+
 - Remove `budgetConstraints` from `AuctionConfig`
 - Remove `balance` from `Bidder`
 - Remove `refunds` from `Settlement`
@@ -131,6 +135,7 @@ code packages/core/src/types.ts  # or your editor
 ```
 
 Then run tests continuously:
+
 ```bash
 cd packages/core && pnpm test:watch
 ```
@@ -140,7 +145,3 @@ cd packages/core && pnpm test:watch
 **Current Status:** Week 0.5 ✅ Complete
 **Next:** Week 1, Day 1 - Create `types.ts`
 **Goal:** Full core implementation by end of Week 1
-
-
-
-
