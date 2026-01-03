@@ -30,6 +30,8 @@ NAME              STATUS   PORTS
 auction-kit-db    Up       0.0.0.0:5432->5432/tcp
 ```
 
+> **Note:** If you already have PostgreSQL running on port 5432, you may need to change the port in `docker-compose.yml` or stop your local PostgreSQL service.
+
 ### 2. Generate and Run Migrations
 
 ```bash
@@ -111,7 +113,7 @@ Opens a web interface at http://localhost:4983 to browse tables and data.
 
 ```bash
 # Connect to database
-docker exec -it auction-kit-db psql -U auction -d auction_kit_dev
+docker exec -it auction-kit-db psql -U postgres -d auction_kit_dev
 
 # List tables
 \dt
@@ -132,8 +134,8 @@ Install "PostgreSQL" extension and connect:
 - Host: localhost
 - Port: 5432
 - Database: auction_kit_dev
-- Username: auction
-- Password: auction123
+- Username: postgres
+- Password: postgres
 
 ## Database Schema
 
@@ -201,7 +203,7 @@ await client.end()
 
 ```bash
 # Drop all tables
-docker exec -it auction-kit-db psql -U auction -d auction_kit_dev -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+docker exec -it auction-kit-db psql -U postgres -d auction_kit_dev -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
 
 # Re-run migrations
 cd packages/drizzle
@@ -239,8 +241,8 @@ brew services stop postgresql
 ports:
   - "5433:5432"  # Use 5433 instead
 
-# Then update .env:
-DATABASE_URL=postgres://auction:auction123@localhost:5433/auction_kit_dev
+# Then update your DATABASE_URL:
+DATABASE_URL=postgres://postgres:postgres@localhost:5433/auction_kit_dev
 ```
 
 ### Connection Refused
@@ -269,10 +271,10 @@ Check environment variable:
 
 ```bash
 echo $DATABASE_URL
-# Should show: postgres://auction:auction123@localhost:5432/auction_kit_dev
+# Should show: postgres://postgres:postgres@localhost:5432/auction_kit_dev
 
 # If empty:
-export DATABASE_URL="postgres://auction:auction123@localhost:5432/auction_kit_dev"
+export DATABASE_URL="postgres://postgres:postgres@localhost:5432/auction_kit_dev"
 ```
 
 ## Integration with Your App

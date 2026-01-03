@@ -33,5 +33,9 @@ export const Documents: Paths[] = [
   {
     title: "Drizzle API Reference",
     href: "/api/drizzle"
+  },
+  {
+    title: "Hono API Reference",
+    href: "/api/hono"
   }
 ]

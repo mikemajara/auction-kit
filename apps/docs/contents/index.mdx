@@ -13,7 +13,7 @@ A framework-agnostic auction mechanics library for first-price and second-price 
 
 **Core package:** ✅ 101 tests passing  
 **Database layer:** ✅ Tested and working  
-**API layer:** ⬜ Coming soon
+**API layer:** ✅ Complete (Hono REST API)
 
 ## Quick Start - Test Database Now!
 
@@ -23,10 +23,10 @@ docker-compose up -d
 
 # 2. Apply schema
 cd packages/drizzle
-DATABASE_URL="postgres://auction:auction123@localhost:5433/auction_kit_dev" pnpm db:push
+DATABASE_URL="postgres://postgres:postgres@localhost:5432/auction_kit_dev" pnpm db:push
 
 # 3. Run test
-DATABASE_URL="postgres://auction:auction123@localhost:5433/auction_kit_dev" pnpm test:manual
+DATABASE_URL="postgres://postgres:postgres@localhost:5432/auction_kit_dev" pnpm test:manual
 ```
 
 Expected output: Bob wins VIP seat, pays $150 (second-price), saves $50! 🎉
@@ -48,10 +48,9 @@ Expected output: Bob wins VIP seat, pays $150 (second-price), saves $50! 🎉
 
 ### ⬜ Coming Soon
 
-- Hono REST API routes
-- Cloudflare Workers deployment
 - Next.js/Express examples
 - Real-time patterns
+- npm publishing
 
 ## Packages
 
@@ -59,7 +58,7 @@ Expected output: Bob wins VIP seat, pays $150 (second-price), saves $50! 🎉
 |---------|--------|-------|---------|
 | `@auction-kit/core` | ✅ Complete | 101/101 | Pure TypeScript auction logic |
 | `@auction-kit/drizzle` | ✅ Complete | Tested | Postgres database layer |
-| `@auction-kit/hono` | ⬜ Pending | - | REST API reference |
+| `@auction-kit/hono` | ✅ Complete | 8+ | REST API reference |
 
 ## Architecture
 
@@ -76,7 +75,7 @@ Expected output: Bob wins VIP seat, pays $150 (second-price), saves $50! 🎉
          │
 ┌────────▼────────┐
 │  Hono Package   │  ← REST API routes
-│  (routes, auth) │    Reference implementation (coming soon)
+│  (routes, middleware) │  Cloudflare Workers + Node.js
 └─────────────────┘
 ```
 
@@ -90,6 +89,7 @@ Expected output: Bob wins VIP seat, pays $150 (second-price), saves $50! 🎉
 
 - **[Core API Reference](/docs/api/core)** - Core API reference
 - **[Drizzle API Reference](/docs/api/drizzle)** - Database API reference
+- **[Hono API Reference](/docs/api/hono)** - REST API reference
 
 ## Usage Example
 
@@ -198,7 +198,7 @@ auction-kit/
 ├── packages/
 │   ├── core/           ✅ Complete (101 tests)
 │   ├── drizzle/        ✅ Complete (tested)
-│   └── hono/           ⬜ Coming soon
+│   └── hono/           ✅ Complete (8+ tests)
 ├── docker-compose.yml  Postgres for testing
 └── .env                Database connection
 ```
@@ -215,7 +215,7 @@ auction-kit/
 - **Drizzle ORM** - Database operations
 - **Postgres** - Production database
 - **Vitest** - Testing framework
-- **Hono** - API framework (coming soon)
+- **Hono** - API framework (REST API)
 
 ## License
 
@@ -232,7 +232,7 @@ This is currently in active development.
 
 ---
 
-**Status:** ✅ Production-ready core + database layer  
+**Status:** ✅ Production-ready core + database + API layers  
 
 🎉 **Try it now:** Run `docker-compose up -d && cd packages/drizzle && pnpm test:manual`
 

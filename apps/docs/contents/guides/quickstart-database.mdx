@@ -28,15 +28,15 @@ docker-compose ps
 
 # 2. Run the test
 cd packages/drizzle
-DATABASE_URL="postgres://auction:auction123@localhost:5433/auction_kit_dev" pnpm test:manual
+DATABASE_URL="postgres://postgres:postgres@localhost:5432/auction_kit_dev" pnpm test:manual
 ```
 
 ## Default environment configuration
 
-- **PostgreSQL 16** on port 5433 (to avoid conflicts)
+- **PostgreSQL 16** on port 5432
 - **Database**: `auction_kit_dev`
-- **Username**: `auction`
-- **Password**: `auction123`
+- **Username**: `postgres`
+- **Password**: `postgres`
 
 ## Inspecting the database
 
@@ -44,7 +44,7 @@ DATABASE_URL="postgres://auction:auction123@localhost:5433/auction_kit_dev" pnpm
 
 ```bash
 cd packages/drizzle
-DATABASE_URL="postgres://auction:auction123@localhost:5433/auction_kit_dev" pnpm db:studio
+DATABASE_URL="postgres://postgres:postgres@localhost:5432/auction_kit_dev" pnpm db:studio
 ```
 
 Opens at http://localhost:4983
@@ -52,7 +52,7 @@ Opens at http://localhost:4983
 ### Option 2: psql Command Line
 
 ```bash
-docker exec -it auction-kit-db psql -U auction -d auction_kit_dev
+docker exec -it auction-kit-db psql -U postgres -d auction_kit_dev
 
 # Then run queries:
 \dt                          # List tables
@@ -68,10 +68,10 @@ SELECT * FROM settlements;   # See results
 
 Use these credentials:
 - **Host**: localhost
-- **Port**: 5433
+- **Port**: 5432
 - **Database**: auction_kit_dev
-- **Username**: auction
-- **Password**: auction123
+- **Username**: postgres
+- **Password**: postgres
 
 ## Test variations
 
@@ -122,11 +122,11 @@ const result = await resolveAuction(db, auction.id, 12345) // Seed for reproduci
 ### Reset database (keep container):
 
 ```bash
-docker exec -it auction-kit-db psql -U auction -d auction_kit_dev -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+docker exec -it auction-kit-db psql -U postgres -d auction_kit_dev -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
 
 # Then re-push schema:
 cd packages/drizzle
-DATABASE_URL="postgres://auction:auction123@localhost:5433/auction_kit_dev" pnpm db:push
+DATABASE_URL="postgres://postgres:postgres@localhost:5432/auction_kit_dev" pnpm db:push
 ```
 
 ### Stop everything:
