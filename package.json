@@ -18,6 +18,7 @@
   "scripts": {
     "dev": "pnpm -r --parallel dev",
     "dev:docs": "pnpm --filter @auction-kit/docs dev",
+    "dev:demo": "pnpm --filter @auction-kit/hono --filter @auction-kit/nextjs-example --parallel dev",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
