@@ -1,0 +1,83 @@
+---
+title: "Working with Items"
+description: "Create and validate the catalog of things bidders can win"
+order: 3
+category: "guides"
+---
+
+Items describe what bidders are competing for in each auction. Every bid references a specific item by UUID, so items must be created before bidding begins.
+
+## Creating Items
+
+```typescript
+import { createItem } from '@auction-kit/drizzle'
+
+const vipSeat = await createItem(db, {
+  auctionId: auction.id,
+  name: 'VIP Seat',
+  description: 'Front row center seat',
+  quantity: 1,
+})
+```
+
+- `name` is required and should be human readable.
+- `description` is optional metadata.
+- `quantity` defaults to 1 and represents how many winners this item can produce.
+
+Use `getItemsByAuction()` to list every item attached to a given auction.
+
+```typescript
+import { getItemsByAuction } from '@auction-kit/drizzle'
+
+const items = await getItemsByAuction(db, auction.id)
+```
+
+Fetch a single item when you only need one identifier.
+
+```typescript
+import { getItem } from '@auction-kit/drizzle'
+
+const item = await getItem(db, vipSeat.id)
+```
+
+## Validations
+
+The database layer now enforces:
+
+- Bids can only reference items that exist.
+- The bidder and item must belong to the same auction.
+- Items and their bids are deleted automatically if the parent auction is removed.
+
+If a bidder tries to use an item outside their auction, `placeBid()` throws a descriptive error.
+
+## Example Flow
+
+```typescript
+const auction = await createAuction(db, config)
+
+const vipSeat = await createItem(db, {
+  auctionId: auction.id,
+  name: 'VIP Seat',
+  quantity: 1,
+})
+
+const alice = await createBidder(db, auction.id, 'Alice')
+
+await placeBid(db, {
+  auctionId: auction.id,
+  bidderId: alice.id,
+  itemId: vipSeat.id,
+  amount: 250,
+})
+
+const state = await getAuctionState(db, auction.id)
+console.log(state.items.length) // 1
+```
+
+## Troubleshooting
+
+- **Missing item error**: Create the item first and capture its UUID.
+- **Wrong auction error**: Double-check that both `bidderId` and `itemId` belong to the same `auctionId`.
+- **Quantity confusion**: Quantity controls how many winners can be assigned to an item when multi-unit auctions are enabled; it does not automatically clone items.
+
+

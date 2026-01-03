@@ -59,6 +59,47 @@ The core auction logic is implemented in `packages/core/src/`:
 - `rankBids()` - Bid ranking logic
 - `settleAuction()` - Settlement calculation
 
+## Example Usage
+
+Use the Drizzle package to wire the core logic to Postgres:
+
+```typescript
+import {
+  createAuction,
+  createItem,
+  createBidder,
+  placeBid,
+  resolveAuction,
+  getAuctionState,
+} from '@auction-kit/drizzle'
+
+const auction = await createAuction(db, {
+  type: 'second-price',
+  tieBreak: 'timestamp',
+  multiUnit: false,
+})
+
+const vipSeat = await createItem(db, {
+  auctionId: auction.id,
+  name: 'VIP Seat',
+  quantity: 1,
+})
+
+const alice = await createBidder(db, auction.id, 'Alice')
+
+await placeBid(db, {
+  auctionId: auction.id,
+  bidderId: alice.id,
+  itemId: vipSeat.id, // Items are referenced by UUID
+  amount: 120,
+})
+
+await resolveAuction(db, auction.id)
+
+const state = await getAuctionState(db, auction.id)
+console.log(state.items)
+```
+
 ## Next Steps
 
 The library continues to evolve with new features:

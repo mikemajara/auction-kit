@@ -13,10 +13,12 @@ This guide walks through the manual database test script. It provisions PostgreS
 
 The script verifies that:
 
-- A second-price auction can be created.
-- Bidders and bids are stored with the expected data.
-- Auction resolution selects the highest bidder.
-- Settlement records use the second-highest bid for payment calculations.
+1. A second-price auction is created.
+2. Two items (VIP Seat + General Admission) are registered for that auction.
+3. Three bidders join the auction.
+4. Bids are placed against the VIP Seat item by UUID.
+5. The auction is closed, resolved, and pays the second-highest bid.
+6. Items appear in the reported auction state.
 
 ## Run the manual test
 
@@ -55,6 +57,7 @@ docker exec -it auction-kit-db psql -U auction -d auction_kit_dev
 # Then run queries:
 \dt                          # List tables
 SELECT * FROM auctions;      # See auctions
+SELECT * FROM items;         # See catalog
 SELECT * FROM bidders;       # See bidders
 SELECT * FROM bids;          # See bids  
 SELECT * FROM settlements;   # See results
@@ -142,7 +145,7 @@ Your last test showed:
 
 ```
 Winner: Bob
-Item: vip-seat
+Item: VIP Seat
 Original bid: $200
 Pays: $150
 Reason: second-highest bid becomes the settlement price

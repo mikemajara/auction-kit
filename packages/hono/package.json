@@ -5,24 +5,32 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "dev": "tsc --watch",
+    "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "start": "node dist/server.js"
   },
   "dependencies": {
     "@auction-kit/core": "workspace:*",
-    "@auction-kit/drizzle": "workspace:*"
+    "@auction-kit/drizzle": "workspace:*",
+    "@hono/node-server": "^1.8.0",
+    "dotenv": "^16.3.1",
+    "hono": "^4.0.0"
   },
   "devDependencies": {
-    "typescript": "^5.3.3"
+    "@types/node": "^20.10.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.1.0"
   },
   "peerDependencies": {
-    "hono": "^3.11.0"
+    "drizzle-orm": "^0.29.0",
+    "postgres": "^3.4.0"
   }
 }
-
-
-
-

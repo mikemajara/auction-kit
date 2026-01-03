@@ -15,6 +15,7 @@ import postgres from 'postgres'
 import {
   createAuction,
   createBidder,
+  createItem,
   placeBid,
   resolveAuction,
   getAuctionState,
@@ -52,8 +53,25 @@ async function main() {
     console.log(`   📋 Tie-break: ${auction.config.tieBreak}`)
     console.log(`   📋 Multi-unit: ${auction.config.multiUnit}\n`)
 
-    // 2. Create bidders
-    console.log('2️⃣  Adding bidders...')
+    // 2. Create items
+    console.log('2️⃣  Creating auction items...')
+    const vipSeat = await createItem(db, {
+      auctionId: auction.id,
+      name: 'VIP Seat',
+      description: 'Front row center seat with backstage access',
+      quantity: 1,
+    })
+    const generalSeat = await createItem(db, {
+      auctionId: auction.id,
+      name: 'General Admission',
+      description: 'Standing room ticket',
+      quantity: 10,
+    })
+    console.log(`   ✅ VIP Seat: ${vipSeat.id}`)
+    console.log(`   ✅ General Admission: ${generalSeat.id} (qty: ${generalSeat.quantity})\n`)
+
+    // 3. Create bidders
+    console.log('3️⃣  Adding bidders...')
     const alice = await createBidder(db, auction.id, 'Alice')
     const bob = await createBidder(db, auction.id, 'Bob')
     const charlie = await createBidder(db, auction.id, 'Charlie')
@@ -61,13 +79,13 @@ async function main() {
     console.log(`   ✅ Bob: ${bob.id}`)
     console.log(`   ✅ Charlie: ${charlie.id}\n`)
 
-    // 3. Place bids
-    console.log('3️⃣  Placing bids on VIP seat...')
+    // 4. Place bids
+    console.log('4️⃣  Placing bids on VIP seat...')
     
     await placeBid(db, {
       auctionId: auction.id,
       bidderId: alice.id,
-      itemId: 'vip-seat',
+      itemId: vipSeat.id,
       amount: 100,
     })
     console.log('   💰 Alice bids $100')
@@ -75,7 +93,7 @@ async function main() {
     await placeBid(db, {
       auctionId: auction.id,
       bidderId: bob.id,
-      itemId: 'vip-seat',
+      itemId: vipSeat.id,
       amount: 200,
     })
     console.log('   💰 Bob bids $200')
@@ -83,26 +101,27 @@ async function main() {
     await placeBid(db, {
       auctionId: auction.id,
       bidderId: charlie.id,
-      itemId: 'vip-seat',
+      itemId: vipSeat.id,
       amount: 150,
     })
     console.log('   💰 Charlie bids $150\n')
 
-    // 4. View state before resolution
-    console.log('4️⃣  Current auction state:')
+    // 5. View state before resolution
+    console.log('5️⃣  Current auction state:')
     const stateBefore = await getAuctionState(db, auction.id)
+    console.log(`   📊 Items: ${stateBefore.items.length}`)
     console.log(`   📊 Bidders: ${stateBefore.bidders.length}`)
     console.log(`   📊 Total bids: ${stateBefore.bids.length}`)
     console.log(`   📊 Active bids: ${stateBefore.bids.filter(b => b.status === 'active').length}`)
     console.log(`   📊 Status: ${stateBefore.auction.status}\n`)
 
-    // 5. Close auction
-    console.log('5️⃣  Closing auction...')
+    // 6. Close auction
+    console.log('6️⃣  Closing auction...')
     await updateAuctionStatus(db, auction.id, 'closed')
     console.log('   ✅ Auction closed to new bids\n')
 
-    // 6. Resolve auction
-    console.log('6️⃣  Resolving auction...')
+    // 7. Resolve auction
+    console.log('7️⃣  Resolving auction...')
     const result = await resolveAuction(db, auction.id)
     console.log(`   ✅ Settlements created: ${result.settlements.length}`)
     console.log(`   ✅ Errors: ${result.errors.length}`)
@@ -112,16 +131,17 @@ async function main() {
     }
     console.log()
 
-    // 7. Show results
-    console.log('7️⃣  Settlement results:')
+    // 8. Show results
+    console.log('8️⃣  Settlement results:')
     console.log('   ' + '─'.repeat(60))
     
     for (const settlement of result.settlements) {
       const bidder = [alice, bob, charlie].find(b => b.id === settlement.bidderId)
+      const settledItem = [vipSeat, generalSeat].find(item => item.id === settlement.itemId)
       const savings = settlement.bidAmount - settlement.wonAmount
       
       console.log(`   🏆 WINNER: ${bidder?.name}`)
-      console.log(`      Item: ${settlement.itemId}`)
+      console.log(`      Item: ${settledItem?.name ?? settlement.itemId}`)
       console.log(`      Original bid: $${settlement.bidAmount}`)
       console.log(`      Pays: $${settlement.wonAmount}`)
       console.log(`      Saves: $${savings} (second-price discount!)`)
@@ -129,18 +149,19 @@ async function main() {
     console.log('   ' + '─'.repeat(60))
     console.log()
 
-    // 8. Verify final state
-    console.log('8️⃣  Final auction state:')
+    // 9. Verify final state
+    console.log('9️⃣  Final auction state:')
     const stateAfter = await getAuctionState(db, auction.id)
     console.log(`   📊 Status: ${stateAfter.auction.status}`)
     console.log(`   📊 Resolved at: ${stateAfter.auction.resolvedAt?.toLocaleString()}`)
     console.log(`   📊 Total settlements: ${stateAfter.settlements.length}`)
+    console.log(`   📊 Items tracked: ${stateAfter.items.length}`)
     console.log(`   📊 Won bids: ${stateAfter.bids.filter(b => b.status === 'won').length}`)
     console.log(`   📊 Lost bids: ${stateAfter.bids.filter(b => b.status === 'lost').length}`)
     console.log()
 
-    // 9. Expected vs Actual
-    console.log('9️⃣  Verification:')
+    // 10. Expected vs Actual
+    console.log('🔟  Verification:')
     const expectedWinner = bob
     const actualWinner = result.settlements[0]
     

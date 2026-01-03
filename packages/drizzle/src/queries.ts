@@ -8,11 +8,20 @@
  * - Querying auction state
  */
 
-import { eq, and } from 'drizzle-orm'
+import { eq, and, desc } from 'drizzle-orm'
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
-import { auctions, bidders, bids, settlements } from './schema'
-import type { NewAuction, NewBidder, NewBid, Auction, Bidder, Bid } from './schema'
-import { settleBids as settleCore, validateBid, filterValidBids } from '@auction-kit/core'
+import { auctions, bidders, bids, settlements, items } from './schema'
+import type {
+  NewAuction,
+  NewBidder,
+  NewBid,
+  Auction,
+  Bidder,
+  Bid,
+  Item,
+  NewItem,
+} from './schema'
+import { settleBids as settleCore, validateBid } from '@auction-kit/core'
 import type { AuctionConfig, ResolutionResult } from '@auction-kit/core'
 
 /**
@@ -133,6 +142,63 @@ export async function getBiddersByAuction(
 }
 
 /**
+ * Create an item for an auction
+ */
+export async function createItem(
+  db: Database,
+  input: {
+    auctionId: string
+    name: string
+    description?: string
+    quantity?: number
+  }
+): Promise<Item> {
+  const newItem: NewItem = {
+    auctionId: input.auctionId,
+    name: input.name,
+    description: input.description ?? null,
+    quantity: input.quantity ?? 1,
+  }
+
+  const [item] = await db.insert(items).values(newItem).returning()
+
+  if (!item) {
+    throw new Error('Failed to create item')
+  }
+
+  return item
+}
+
+/**
+ * Get all items for an auction
+ */
+export async function getItemsByAuction(
+  db: Database,
+  auctionId: string
+): Promise<Item[]> {
+  return db
+    .select()
+    .from(items)
+    .where(eq(items.auctionId, auctionId))
+}
+
+/**
+ * Get an item by ID
+ */
+export async function getItem(
+  db: Database,
+  itemId: string
+): Promise<Item | null> {
+  const [item] = await db
+    .select()
+    .from(items)
+    .where(eq(items.id, itemId))
+    .limit(1)
+
+  return item ?? null
+}
+
+/**
  * Place a new bid
  * 
  * Validates the bid before inserting
@@ -156,6 +222,18 @@ export async function placeBid(
   const bidder = await getBidder(db, input.bidderId)
   if (!bidder) {
     throw new Error(`Bidder ${input.bidderId} not found`)
+  }
+  if (bidder.auctionId !== input.auctionId) {
+    throw new Error(`Bidder ${input.bidderId} is not registered in auction ${input.auctionId}`)
+  }
+
+  // Validate item exists for this auction
+  const item = await getItem(db, input.itemId)
+  if (!item) {
+    throw new Error(`Item ${input.itemId} not found`)
+  }
+  if (item.auctionId !== input.auctionId) {
+    throw new Error(`Item ${input.itemId} does not belong to auction ${input.auctionId}`)
   }
 
   // Create bid object for validation
@@ -336,6 +414,7 @@ export async function getAuctionState(
 
   const allBidders = await getBiddersByAuction(db, auctionId)
   const allBids = await getBidsByAuction(db, auctionId)
+  const allItems = await getItemsByAuction(db, auctionId)
   
   const allSettlements = await db
     .select()
@@ -346,6 +425,7 @@ export async function getAuctionState(
     auction,
     bidders: allBidders,
     bids: allBids,
+    items: allItems,
     settlements: allSettlements,
   }
 }
@@ -360,6 +440,124 @@ export async function cancelBid(
   const [bid] = await db
     .update(bids)
     .set({ status: 'cancelled' })
+    .where(eq(bids.id, bidId))
+    .returning()
+
+  if (!bid) {
+    throw new Error(`Bid ${bidId} not found`)
+  }
+
+  return bid
+}
+
+/**
+ * Get all auctions with optional filtering
+ */
+export async function getAllAuctions(
+  db: Database,
+  filters?: {
+    status?: 'open' | 'closed' | 'resolved'
+    limit?: number
+    offset?: number
+  }
+): Promise<Auction[]> {
+  let query = db
+    .select()
+    .from(auctions)
+
+  if (filters?.status) {
+    query = query.where(eq(auctions.status, filters.status)) as any
+  }
+
+  query = query.orderBy(desc(auctions.createdAt)) as any
+
+  if (filters?.limit) {
+    query = query.limit(filters.limit) as any
+  }
+
+  if (filters?.offset) {
+    query = query.offset(filters.offset) as any
+  }
+
+  return query
+}
+
+/**
+ * Update bidder
+ */
+export async function updateBidder(
+  db: Database,
+  bidderId: string,
+  updates: { name?: string }
+): Promise<Bidder> {
+  const [bidder] = await db
+    .update(bidders)
+    .set(updates)
+    .where(eq(bidders.id, bidderId))
+    .returning()
+
+  if (!bidder) {
+    throw new Error(`Bidder ${bidderId} not found`)
+  }
+
+  return bidder
+}
+
+/**
+ * Update item
+ */
+export async function updateItem(
+  db: Database,
+  itemId: string,
+  updates: {
+    name?: string
+    description?: string | null
+    quantity?: number
+  }
+): Promise<Item> {
+  const [item] = await db
+    .update(items)
+    .set(updates)
+    .where(eq(items.id, itemId))
+    .returning()
+
+  if (!item) {
+    throw new Error(`Item ${itemId} not found`)
+  }
+
+  return item
+}
+
+/**
+ * Get bid by ID
+ */
+export async function getBid(
+  db: Database,
+  bidId: string
+): Promise<Bid | null> {
+  const [bid] = await db
+    .select()
+    .from(bids)
+    .where(eq(bids.id, bidId))
+    .limit(1)
+
+  return bid ?? null
+}
+
+/**
+ * Update bid
+ */
+export async function updateBid(
+  db: Database,
+  bidId: string,
+  updates: {
+    amount?: number
+    status?: 'active' | 'won' | 'lost' | 'cancelled'
+  }
+): Promise<Bid> {
+  const [bid] = await db
+    .update(bids)
+    .set(updates)
     .where(eq(bids.id, bidId))
     .returning()
 

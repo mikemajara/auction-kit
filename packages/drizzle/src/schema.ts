@@ -32,6 +32,27 @@ export const auctions = pgTable('auctions', {
 })
 
 /**
+ * Items table
+ * Stores the catalog of things bidders can win per auction
+ */
+export const items = pgTable('items', {
+  id: uuid('id').primaryKey().defaultRandom(),
+
+  auctionId: uuid('auction_id')
+    .notNull()
+    .references(() => auctions.id, { onDelete: 'cascade' }),
+
+  name: text('name').notNull(),
+  description: text('description'),
+
+  quantity: integer('quantity').notNull().default(1),
+
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+})
+
+/**
  * Bidders table
  * Stores participants in auctions
  */
@@ -64,7 +85,9 @@ export const bids = pgTable('bids', {
     .notNull()
     .references(() => bidders.id, { onDelete: 'cascade' }),
   
-  itemId: text('item_id').notNull(),
+  itemId: uuid('item_id')
+    .notNull()
+    .references(() => items.id, { onDelete: 'cascade' }),
   
   amount: integer('amount').notNull(),
   
@@ -92,7 +115,9 @@ export const settlements = pgTable('settlements', {
     .notNull()
     .references(() => bidders.id, { onDelete: 'cascade' }),
   
-  itemId: text('item_id').notNull(),
+  itemId: uuid('item_id')
+    .notNull()
+    .references(() => items.id, { onDelete: 'cascade' }),
   
   wonAmount: integer('won_amount').notNull(),
   
@@ -111,6 +136,9 @@ export type NewAuction = typeof auctions.$inferInsert
 
 export type Bidder = typeof bidders.$inferSelect
 export type NewBidder = typeof bidders.$inferInsert
+
+export type Item = typeof items.$inferSelect
+export type NewItem = typeof items.$inferInsert
 
 export type Bid = typeof bids.$inferSelect
 export type NewBid = typeof bids.$inferInsert

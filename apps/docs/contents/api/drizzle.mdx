@@ -7,11 +7,12 @@ category: "api"
 
 ## Features
 
-- **Complete schema** for auctions, bidders, bids, and settlements
+- **Complete schema** for auctions, items, bidders, bids, and settlements
 - **Type-safe queries** powered by Drizzle ORM
 - **Transaction support** for atomic auction resolution
 - **Validation integration** with core package
 - **Timestamp tracking** for audit trails
+- **Item catalog** with enforced foreign keys for bids and settlements
 
 ## Installation
 
@@ -64,6 +65,21 @@ const auction = await createAuction(db, {
 })
 ```
 
+### Create Items
+
+```typescript
+import { createItem } from '@auction-kit/drizzle'
+
+const vipSeat = await createItem(db, {
+  auctionId: auction.id,
+  name: 'VIP Seat',
+  description: 'Front row center seat',
+  quantity: 1,
+})
+```
+
+Create as many items as you need per auction and capture their UUIDs for later bids.
+
 ### Add Bidders
 
 ```typescript
@@ -71,6 +87,37 @@ import { createBidder } from '@auction-kit/drizzle'
 
 const alice = await createBidder(db, auction.id, 'Alice')
 const bob = await createBidder(db, auction.id, 'Bob')
+```
+
+### Items
+
+#### createItem()
+
+```typescript
+import { createItem } from '@auction-kit/drizzle'
+
+const item = await createItem(db, {
+  auctionId: auction.id,
+  name: 'VIP Seat',
+  description: 'Front row center seat',
+  quantity: 1, // Optional, defaults to 1
+})
+```
+
+#### getItem()
+
+```typescript
+import { getItem } from '@auction-kit/drizzle'
+
+const item = await getItem(db, vipSeat.id)
+```
+
+#### getItemsByAuction()
+
+```typescript
+import { getItemsByAuction } from '@auction-kit/drizzle'
+
+const items = await getItemsByAuction(db, auction.id)
 ```
 
 ### Place Bids
@@ -81,14 +128,14 @@ import { placeBid } from '@auction-kit/drizzle'
 await placeBid(db, {
   auctionId: auction.id,
   bidderId: alice.id,
-  itemId: 'seat1',
+  itemId: vipSeat.id,
   amount: 100,
 })
 
 await placeBid(db, {
   auctionId: auction.id,
   bidderId: bob.id,
-  itemId: 'seat1',
+  itemId: vipSeat.id,
   amount: 150,
 })
 ```
@@ -116,6 +163,7 @@ import { getAuctionState } from '@auction-kit/drizzle'
 const state = await getAuctionState(db, auction.id)
 
 console.log('Auction:', state.auction)
+console.log('Items:', state.items)
 console.log('Bidders:', state.bidders)
 console.log('Bids:', state.bids)
 console.log('Settlements:', state.settlements)
@@ -126,19 +174,25 @@ console.log('Settlements:', state.settlements)
 ### Tables
 
 - **auctions** - Auction configurations and status
+- **items** - Catalog entries (name, description, quantity) scoped to auctions
 - **bidders** - Participants in auctions
-- **bids** - Individual bids with amounts and timestamps
-- **settlements** - Final results after resolution
+- **bids** - Individual bids with enforced bidder/item foreign keys
+- **settlements** - Final results referencing winners and items
 
 ### Relationships
 
 ```
 auctions
+  └── items (one-to-many)
   └── bidders (one-to-many)
-  └── bids (one-to-many)
+  └── bids (one-to-many via bidder/item)
   └── settlements (one-to-many)
 
 bidders
+  └── bids (one-to-many)
+  └── settlements (one-to-many)
+
+items
   └── bids (one-to-many)
   └── settlements (one-to-many)
 ```
@@ -158,6 +212,12 @@ bidders
 - `createBidder(db, auctionId, name)` - Add bidder to auction
 - `getBidder(db, bidderId)` - Fetch bidder by ID
 - `getBiddersByAuction(db, auctionId)` - List all bidders
+
+### Item Operations
+
+- `createItem(db, input)` - Create an item for an auction
+- `getItem(db, itemId)` - Fetch a specific item
+- `getItemsByAuction(db, auctionId)` - List every item for an auction
 
 ### Bid Operations
 
